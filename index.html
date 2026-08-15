@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英语精读助手 · AI 语法标注 & 点词查词</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">📖</span>
+    <div>
+      <h1>英语精读助手</h1>
+      <p>语法彩色标注 · 点词即查 · 发音朗读</p>
+    </div>
+  </div>
+  <nav class="tabs">
+    <button class="tab active" data-tab="reader">精读</button>
+    <button class="tab" data-tab="wordbook">生词本</button>
+    <button class="tab" data-tab="history">历史</button>
+  </nav>
+  <button class="icon-btn" id="settingsBtn" title="AI 设置">⚙️</button>
+</header>
+
+<main>
+  <!-- ============ 精读 ============ -->
+  <section id="view-reader" class="view active">
+    <div class="reader-layout">
+      <aside class="input-pane">
+        <div class="pane-head">
+          <h2>输入文章</h2>
+          <button id="sampleBtn" class="link-btn">载入示例</button>
+        </div>
+        <textarea id="articleInput" placeholder="把英语文章粘贴到这里，点击「开始分析」…"></textarea>
+        <div class="input-actions">
+          <button id="analyzeBtn" class="primary-btn">🎨 开始分析</button>
+          <button id="clearBtn" class="ghost-btn">清空</button>
+        </div>
+        <div class="ai-hint" id="aiHint"></div>
+      </aside>
+
+      <section class="result-pane">
+        <div class="legend" id="legend"></div>
+        <div class="stats" id="stats"></div>
+        <div class="article-wrap">
+          <div id="articleOutput" class="article"></div>
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">📄</div>
+            <p>输入或粘贴一篇英语文章，然后点击「开始分析」<br>
+            我会用颜色标出：<b style="color:#e5484d">从句</b> · <b style="color:#3b82f6">非谓语</b> · <b style="color:#16a34a">介词短语</b> · <b style="color:#f59e0b">并列词</b>（从句内遇到其他成分会自动换色）</p>
+            <p class="empty-sub">把鼠标悬停在彩色片段上看语法解释，点击任意单词即可查中文释义、例句和发音</p>
+          </div>
+        </div>
+        <div class="result-actions" id="resultActions" hidden>
+          <button id="exportBtn" class="ghost-btn">⬇️ 导出标注版</button>
+          <button id="saveHistoryBtn" class="ghost-btn">💾 存入历史</button>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 生词本 ============ -->
+  <section id="view-wordbook" class="view">
+    <div class="list-pane">
+      <div class="list-head">
+        <h2>📚 我的生词本</h2>
+        <div>
+          <button id="exportWordsBtn" class="ghost-btn">导出词表</button>
+          <button id="clearWordsBtn" class="ghost-btn">清空</button>
+        </div>
+      </div>
+      <div id="wordbookList" class="word-list"></div>
+      <div class="empty-list" id="wordbookEmpty">还没有生词，在精读页面点击单词并选择「加入生词本」即可收藏</div>
+    </div>
+  </section>
+
+  <!-- ============ 历史 ============ -->
+  <section id="view-history" class="view">
+    <div class="list-pane">
+      <div class="list-head">
+        <h2>🕘 分析历史</h2>
+        <button id="clearHistoryBtn" class="ghost-btn">清空历史</button>
+      </div>
+      <div id="historyList"></div>
+      <div class="empty-list" id="historyEmpty">还没有历史记录，分析文章后点击「存入历史」即可保存</div>
+    </div>
+  </section>
+</main>
+
+<!-- 词典抽屉 -->
+<aside id="dictDrawer" class="drawer" aria-hidden="true">
+  <div class="drawer-head">
+    <h2 id="dictWordTitle"></h2>
+    <button class="drawer-close" id="dictClose" title="关闭">✕</button>
+  </div>
+  <div id="dictContent" class="drawer-body"><div class="dict-loading">加载中…</div></div>
+</aside>
+<div id="drawerMask" class="mask" hidden></div>
+
+<!-- 语法提示气泡 -->
+<div id="tooltip" class="tooltip" hidden></div>
+
+<!-- AI 设置 -->
+<div id="settingsModal" class="modal-mask" hidden>
+  <div class="modal">
+    <h3>⚙️ AI 增强分析设置</h3>
+    <div class="m-sub">可选。开启后，分析时会调用你填写的大模型接口做更精准的语法标注（需联网、需 API Key）。不开启也能用内置引擎离线分析。</div>
+    <div class="switch-row">
+      <span>启用 AI 增强分析</span>
+      <label class="switch"><input type="checkbox" id="aiEnabled"><span class="slider"></span></label>
+    </div>
+    <div class="field">
+      <label for="aiBaseUrl">接口地址（OpenAI 兼容格式）</label>
+      <input type="text" id="aiBaseUrl" placeholder="https://api.deepseek.com" value="https://api.deepseek.com">
+    </div>
+    <div class="field">
+      <label for="aiKey">API Key</label>
+      <input type="password" id="aiKey" placeholder="sk-…">
+    </div>
+    <div class="field">
+      <label for="aiModel">模型名称</label>
+      <input type="text" id="aiModel" placeholder="deepseek-chat" value="deepseek-chat">
+    </div>
+    <div class="modal-actions">
+      <button class="ghost-btn" id="aiTestBtn">测试连接</button>
+      <button class="primary-btn" id="aiSaveBtn" style="flex:none;padding:9px 20px;">保存</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script src="js/compromise.min.js"></script>
+<script src="js/annotator.js"></script>
+<script src="js/dict.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
